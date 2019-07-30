@@ -26,7 +26,7 @@ VERSION = '0.1.0'
 REQUIRED = ['sys', 'logging', 'contextlib', 
             'subprocess', 'io', 'os', 
             'gzip', 'contextlib', 'binascii', 
-            'stat'. 're'
+            'stat', 're'
 ]
 
 # What packages are optional?
