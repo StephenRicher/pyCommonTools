@@ -23,11 +23,7 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
-REQUIRED = ['sys', 'logging', 'contextlib', 
-            'subprocess', 'io', 'os', 
-            'gzip', 'contextlib', 'binascii', 
-            'stat', 're'
-]
+REQUIRED = []
 
 # What packages are optional?
 EXTRAS = {
