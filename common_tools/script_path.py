@@ -7,7 +7,7 @@ from python3 that are stored in the same directory as the python3 script.
 
 import os, sys, logging
 
-def script_path():
+def directory(path):
     
     """ Return absolute directory of python3 script. """
     
@@ -15,9 +15,9 @@ def script_path():
     log = logging.getLogger(f'{__name__}.{fun_name}')
     
     try:
-        path = '/'.join(os.path.realpath(__file__).split('/')[0:-1]) + '/'
+        dirname = os.path.dirname(os.path.realpath(path)) + '/'
     except NameError:
-        log.error('Function was not called from python3 script.')
+        log.exception(f'{path} is not defined.')
         raise
     
-    return path
+    return dirname
