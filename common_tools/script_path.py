@@ -5,7 +5,7 @@ Retrieve absolute directory of python3 script. Useful for calling bash scripts
 from python3 that are stored in the same directory as the python3 script.
 """
 
-import os, logging
+import os, sys, logging
 
 def script_path():
     
