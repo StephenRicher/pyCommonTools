@@ -17,15 +17,12 @@ def sam_open(filename: str = None, mode: str = 'r', samtools = 'samtools'):
     
     if mode not in ['r', 'w', 'wt', 'wb', 'rt', 'rb']:
         log.error(f'Invalid mode {mode} for sam_open.')
-    
+
     if 'r' in mode:
         try:
-            if filename == '-':
-                stdin = sys.stdin
-            else:
-                stdin = None
+            stdin = sys.stdin if filename == '-' else open(filename, 'rb')
             p = subprocess.Popen(
-                ['samtools', 'view', '-h', filename], 
+                ['samtools', 'view', '-h'], 
                 stdout = subprocess.PIPE, 
                 stdin = stdin, encoding = 'utf8')
             fh = p.stdout
