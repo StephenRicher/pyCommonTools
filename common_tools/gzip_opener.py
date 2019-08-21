@@ -69,7 +69,7 @@ def smart_open(
                 else:
                     stdin2 = None
                 p = subprocess.Popen(
-                    ['zcat', filename], stdout = subprocess.PIPE, 
+                    ['zcat', '-f', filename], stdout = subprocess.PIPE, 
                     stdin = stdin2, encoding = encoding)
                 fh = p.stdout
             except FileNotFoundError:
