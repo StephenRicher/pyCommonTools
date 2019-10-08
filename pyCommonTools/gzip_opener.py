@@ -64,7 +64,7 @@ def smart_open(
         encoding = None if 'b' in mode else 'utf8'
         if 'r' in mode:
             try:
-                if filename == '-':
+                if filename in ['-', None]:
                     stdin2 = sys.stdin
                 else:
                     stdin2 = None
@@ -73,14 +73,14 @@ def smart_open(
                     stdin = stdin2, encoding = encoding)
                 fh = p.stdout
             except FileNotFoundError:
-                if filename == '-':
+                if filename in ['-', None]:
                     infile = sys.stdin.buffer
                 else:
                     infile = filename
                 fh = gzip.open(infile, mode, *args, **kwargs)
         else:
             try:
-                if filename == '-':
+                if filename in ['-', None]:
                     outfile = sys.stdout.buffer
                 else:
                     try:
@@ -91,17 +91,17 @@ def smart_open(
                 p = subprocess.Popen(
                         ['gzip', '-f'], stdout = outfile,
                         stdin = subprocess.PIPE, encoding = encoding)
-                if filename != '-':
+                if filename not in ['-', None]:
                     outfile.close()
                 fh = p.stdin
             except FileNotFoundError:
-                if filename == '-':
+                if filename in ['-', None]:
                     outfile = sys.stdout.buffer
                 else:
                     outfile = filename
                 fh = gzip.open(outfile, mode, *args, **kwargs)
     else:
-        if filename == '-':
+        if filename in ['-', None]:
             if 'r' in mode:
                 stream = sys.stdin
             else:
@@ -116,7 +116,5 @@ def smart_open(
     try:
         yield fh
     finally:
-        try:
+        if filename not in ['-', None]:
             fh.close()
-        except AttributeError:
-            pass
