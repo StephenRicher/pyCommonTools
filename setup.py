@@ -4,12 +4,9 @@
 # Note: To use the 'upload' functionality of this file, you must:
 #   $ pipenv install twine --dev
 
-import io
-import os
-import sys
+from setuptools import setup, find_packages, Command
+import sys, re, os, io
 from shutil import rmtree
-
-from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'pyCommonTools'
@@ -20,6 +17,7 @@ URL = 'https://github.com/StephenRicher/common_tools'
 EMAIL = 'sr467@bath.ac.uk'
 AUTHOR = 'Stephen Richer'
 REQUIRES_PYTHON = '>=3.6.0'
+SCRIPTS = []
 REQUIRED = []
 
 here = os.path.abspath(os.path.dirname(__file__))
