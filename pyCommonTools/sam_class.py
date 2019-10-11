@@ -6,6 +6,7 @@ from pyCommonTools.class_validators import *
 
 class sam:
 
+    '''
     qname = RegexMatch(re.compile(
         r"^[!-?A-~]+$"))
     flag = IntRange(0, (2**16) - 1)
@@ -23,6 +24,7 @@ class sam:
         r"^\*$|^[A-Za-z=.]+$"))
     qual = RegexMatch(re.compile(
         r"^[!-~]+$"))
+    '''
     
     def __init__(self, sam_line):
         self.qname = sam_line[0]
