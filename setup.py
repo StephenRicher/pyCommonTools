@@ -18,7 +18,7 @@ EMAIL = 'sr467@bath.ac.uk'
 AUTHOR = 'Stephen Richer'
 REQUIRES_PYTHON = '>=3.6.0'
 SCRIPTS = []
-REQUIRED = []
+REQUIRED = ['pytest']
 
 here = os.path.abspath(os.path.dirname(__file__))
 
