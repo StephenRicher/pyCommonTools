@@ -1,47 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+""" Module of commononly used functions, classes and tools for research
+    software development.
+"""
+
 # Note: To use the 'upload' functionality of this file, you must:
 #   $ pipenv install twine --dev
 
 from setuptools import setup, find_packages, Command
-import sys, re, os, io
 from shutil import rmtree
+import sys
+import re
+import os
+import io
 
-# Package meta-data.
-NAME = 'pyCommonTools'
-DESCRIPTION = ('Set of tools to perform common tasks across bioinformatics '
-               'tools. These include reading/writing SAM/BAM/GZIP files '
-               'and exception logging.')
-URL = 'https://github.com/StephenRicher/common_tools'
-EMAIL = 'sr467@bath.ac.uk'
-AUTHOR = 'Stephen Richer'
-REQUIRES_PYTHON = '>=3.6.0'
-SCRIPTS = []
-REQUIRED = ['pytest']
-
-here = os.path.abspath(os.path.dirname(__file__))
-
-def get_version():
-    try:
-        with io.open(os.path.join(here, f'{NAME}/_version.py'), 
-                encoding='utf-8') as f:
-            for line in f:
-                mo = re.match("__version__ = '([^']+)'", line)
-                if mo:
-                    ver = mo.group(1)
-                    return ver
-        return None
-    except FileNotFoundError:
-        return None
-
-# Import the README and use it as the long-description.
-try:
-    with io.open(os.path.join(here, 'README.md'), 
-            encoding='utf-8') as f:
-        long_description = '\n' + f.read()
-except FileNotFoundError:
-    long_description = DESCRIPTION
 
 class UploadCommand(Command):
     """Support setup.py upload."""
@@ -68,7 +41,7 @@ class UploadCommand(Command):
             pass
 
         self.status('Building Source and Wheel (universal) distribution…')
-        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+        os.system(f'{sys.executable} setup.py sdist bdist_wheel --universal')
 
         self.status('Uploading the package to PyPI via Twine…')
         os.system('twine upload dist/*')
@@ -79,22 +52,37 @@ class UploadCommand(Command):
 
         sys.exit()
 
-setup(name = NAME,
-    version = get_version(),
-    description = DESCRIPTION,
-    long_description = long_description,
-    long_description_content_type = 'text/markdown',
-    author = AUTHOR,
-    author_email = EMAIL,
-    python_requires = REQUIRES_PYTHON,
-    url = URL,
-    license = 'MIT',
-    packages = find_packages(),
-    install_requires = REQUIRED,
-    scripts = SCRIPTS,
-    setup_requires = ['pytest-runner'],
-    tests_require = ['pytest'],
-    zip_safe = False,
+
+def read(fname):
+    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+        return f.read()
+
+
+version = {}
+with open('version.py') as fp:
+    exec(fp.read(), version)
+
+setup(
+    name='pyCommonTools',
+    author='Stephen Richer',
+    author_email='sr467@bath.ac.uk',
+    url='https://github.com/StephenRicher/pyCommonTools',
+    python_requires='>=3.6.0',
+    license='MIT',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'License :: OSI Approved :: MIT License',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'Programming Language :: Python :: 3',
+        'Natural Language :: English',
+    ],
+    version=version['__version__'],
+    description=__doc__,
+    long_description=read('README.md'),
+    long_description_content_type='text/markdown',
+    py_modules=['pyCommonTools'],
+    zip_safe=False,
     # $ python setup.py upload
     cmdclass={
         'upload': UploadCommand,
