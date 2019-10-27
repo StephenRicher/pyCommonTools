@@ -83,7 +83,7 @@ def _log_uncaught_exception(exc_type, exc_value, exc_traceback):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
     (log.critical(
-        "Uncaught exception",
+        fancy('Uncaught exception', colour='red'),
         exc_info=(exc_type, exc_value, exc_traceback)))
 
 
@@ -291,14 +291,14 @@ def set_subparser(parser=None,
         log.error(f'No valid argparse.ArgumentParser provided.')
         sys.exit(1)
 
-    base_args = argparse.ArgumentParser(
+    base_parser = argparse.ArgumentParser(
         formatter_class=formatter_class,
         add_help=False)
-    base_args.add_argument(
+    base_parser.add_argument(
         '-v', '--verbose',
         action='store_true',
         help='Verbose logging for debugging.')
-    base_args.add_argument(
+    base_parser.add_argument(
         '-l', '--log', nargs='?',
         help='Log output file.')
 
@@ -309,7 +309,37 @@ def set_subparser(parser=None,
         metavar='Commands',
         help='Description:')
 
-    return subparsers, base_args
+    return subparsers, base_parser
+
+
+def execute(parser=None):
+    """ Use in conjunction with pct.set_subparser() to execute
+    specific subparser command.
+    """
+
+    if type(parser) is not argparse.ArgumentParser:
+        sys.stderr.write(
+            'Error: Parser argument not provided to pct.execute().\n')
+        sys.exit(1)
+
+    args = parser.parse_args()
+
+    try:
+        func = args.function
+    except AttributeError:
+        parser.print_help()
+        sys.exit(1)
+
+    log = create_logger(
+        initialise=True,
+        output=args.log,
+        level=logging.DEBUG if args.verbose else None)
+
+    args_dict = vars(args)
+
+    [args_dict.pop(key) for key in ['command', 'function', 'verbose', 'log']]
+
+    return func(**vars(args))
 
 
 # --------- SAM/BAM processing --------- #
@@ -431,3 +461,34 @@ class Sam:
                 f'{self.mapq}\t{self.cigar}\t{self.rnext}\t{self.pnext}\t'
                 f'{self.tlen}\t{self.seq}\t{self.qual}\t'
                 f'{self.get_opt(self.optional)}\n')
+
+
+# --------- Formatting --------- #
+
+
+def fancy(string: str = '', colour: str = 'black',
+          bold: bool = True, underline: bool = False):
+
+    log = create_logger()
+
+    colours = {
+        'black': '',
+        'purple': '\033[95m',
+        'cyan': '\033[96m',
+        'darkcyan': '\033[36m',
+        'blue': '\033[94m',
+        'green': '\033[92m',
+        'yellow': '\033[93m',
+        'red': '\033[91m',
+    }
+
+    if colour not in colours:
+        log.error(f'{colour} is not a valid colour - setting to black.'
+                  f' Please choose from {list(colours.keys())}.')
+        colour = 'black'
+
+    c = colours[colour]
+    b = '\033[1m' if bold else ''
+    u = '\033[4m' if underline else ''
+
+    return f'{c}{b}{u}{string}\033[0m'
