@@ -16,16 +16,29 @@ import os
 import io
 
 
+def read(fname):
+    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+        return f.read()
+
+
+def get_info():
+    info = {}
+    with open('version.py') as fp:
+        exec(fp.read(), info)
+    return info
+
+
 class UploadCommand(Command):
-    """Support setup.py upload."""
+    """Support setup.py upload for twine."""
 
     description = 'Build and publish the package.'
     user_options = []
+    version = get_info()['__version__']
 
     @staticmethod
     def status(s):
         """Prints things in bold."""
-        print('\033[1m{0}\033[0m'.format(s))
+        print(f'\033[1m{s}\033[0m')
 
     def initialize_options(self):
         pass
@@ -33,10 +46,10 @@ class UploadCommand(Command):
     def finalize_options(self):
         pass
 
-    def run(self):
+    def run(self, version = version):
         try:
             self.status('Removing previous builds…')
-            rmtree(os.path.join(here, 'dist'))
+            rmtree(os.path.join(os.path.dirname(__file__), 'dist'))
         except OSError:
             pass
 
@@ -47,20 +60,11 @@ class UploadCommand(Command):
         os.system('twine upload dist/*')
 
         self.status('Pushing git tags…')
-        os.system(f'git tag v{get_version()}')
+        os.system(f'git tag -a v{version}')
         os.system('git push --tags')
 
         sys.exit()
 
-
-def read(fname):
-    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
-        return f.read()
-
-
-version = {}
-with open('version.py') as fp:
-    exec(fp.read(), version)
 
 setup(
     name='pyCommonTools',
@@ -70,14 +74,14 @@ setup(
     python_requires='>=3.6.0',
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
         'Natural Language :: English',
     ],
-    version=version['__version__'],
+    version=get_info()['__version__'],
     description=__doc__,
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
