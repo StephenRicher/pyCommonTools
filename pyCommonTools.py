@@ -343,6 +343,17 @@ def execute(parser=None):
     return func(**vars(args))
 
 
+def positive_int(value):
+    ''' Custom argparse type for positive integer. '''
+
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError(
+            f'{value} is not a positive integer.')
+
+    return ivalue
+
+
 # --------- SAM/BAM processing --------- #
 
 
