@@ -70,6 +70,7 @@ setup(
     author_email='sr467@bath.ac.uk',
     url='https://github.com/StephenRicher/pyCommonTools',
     python_requires='>=3.6.0',
+    install_requires = ['pytest'],
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
