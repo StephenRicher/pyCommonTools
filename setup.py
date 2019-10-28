@@ -11,9 +11,7 @@
 from setuptools import setup, find_packages, Command
 from shutil import rmtree
 import sys
-import re
 import os
-import io
 
 
 def read(fname):
@@ -46,7 +44,7 @@ class UploadCommand(Command):
     def finalize_options(self):
         pass
 
-    def run(self, version = version):
+    def run(self, version=version):
         try:
             self.status('Removing previous builds…')
             rmtree(os.path.join(os.path.dirname(__file__), 'dist'))
