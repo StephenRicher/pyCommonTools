@@ -1,5 +1,6 @@
 from distutils import dir_util
 from pytest import fixture
+from random import choice
 import os
 import re
 import io
@@ -466,7 +467,7 @@ class Sam:
 # --------- Formatting --------- #
 
 
-def fancy(string: str = '', colour: str = 'black',
+def fancy(string: str = '', colour: str = 'black', multi: bool = False,
           bold: bool = True, underline: bool = False):
 
     log = create_logger()
@@ -487,8 +488,19 @@ def fancy(string: str = '', colour: str = 'black',
                   f' Please choose from {list(colours.keys())}.')
         colour = 'black'
 
-    c = colours[colour]
     b = '\033[1m' if bold else ''
     u = '\033[4m' if underline else ''
 
-    return f'{c}{b}{u}{string}\033[0m'
+    if multi:
+        # Back text not included in multi colour text.
+        colours.pop('black')
+        chars = []
+        for char in string:
+            random_colour = colours[choice(list(colours))]
+            chars.append(f'{random_colour}{b}{u}{char}\033[0m')
+        fancy_string = ''.join(chars)
+    else:
+        colour = colours[colour]
+        fancy_string = f'{colour}{b}{u}{string}\033[0m'
+
+    return fancy_string
