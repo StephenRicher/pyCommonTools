@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" Module of commononly used functions, classes and tools for research
+""" Module of commonly used functions, classes and tools for research
     software development.
 """
 
