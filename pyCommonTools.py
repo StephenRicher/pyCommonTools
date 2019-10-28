@@ -1,5 +1,4 @@
 from distutils import dir_util
-from pytest import fixture
 from random import choice
 import os
 import re
@@ -12,11 +11,12 @@ import binascii
 import stat
 import gzip
 import argparse
+import pytest
 
 # --------- Testing --------- #
 
 
-@fixture
+@pytest.fixture
 def datadir(tmpdir, request):
 
     '''
@@ -363,6 +363,8 @@ def open_sam(filename: str = '-', mode: str = 'r', header: bool = True,
 
     """ Custom context manager for reading and writing SAM/BAM files. """
 
+    log = create_logger()
+
     if mode not in ['r', 'w', 'wt', 'wb', 'rt', 'rb']:
         log.error(f'Invalid mode {mode} for open_sam.')
 
@@ -393,7 +395,7 @@ def open_sam(filename: str = '-', mode: str = 'r', header: bool = True,
 class Sam:
 
     def __init__(self, record):
-        record = record.split('\t')
+        record = record.strip().split('\t')
         self.qname = record[0]
         self.flag = int(record[1])
         self.rname = record[2]
