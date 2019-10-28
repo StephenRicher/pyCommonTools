@@ -8,7 +8,7 @@
 # Note: To use the 'upload' functionality of this file, you must:
 #   $ pipenv install twine --dev
 
-from setuptools import setup, find_packages, Command
+from setuptools import setup, Command
 from shutil import rmtree
 import sys
 import os
