@@ -491,19 +491,19 @@ class Sam:
             opt_out += f'{tag_and_type}:{value}\t'
         return opt_out
 
-    @property
+    @cached_property()
     def is_reverse(self):
         return True if (self.flag & 0x10 != 0) else False
 
-    @property
+    @cached_property()
     def is_read1(self):
         return True if (self.flag & 0x40 != 0) else False
 
-    @property
+    @cached_property()
     def is_paired(self):
         return True if (self.flag & 0x1 != 0) else False
 
-    @property
+    @cached_property()
     def reference_length(self):
         cigar_split = re.findall(r'[A-Za-z]+|\d+', self.cigar)
         length = 0
@@ -512,22 +512,22 @@ class Sam:
                 length += int(cigar_split[idx-1])
         return length
 
-    @property
+    @cached_property()
     def right_pos(self):
         return self.left_pos + (self.reference_length - 1)
 
-    @property
+    @cached_property()
     def five_prime_pos(self):
         if self.is_reverse:
             return self.right_pos
         else:
             return self.left_pos
 
-    @property
+    @cached_property()
     def three_prime_pos(self):
         return self.left_pos if self.is_reverse else self.right_pos
 
-    @property
+    @cached_property()
     def middle_pos(self):
         return round((self.right_pos + self.left_pos)/2)
 
