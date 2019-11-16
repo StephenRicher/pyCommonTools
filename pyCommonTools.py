@@ -12,6 +12,7 @@ import stat
 import gzip
 import argparse
 import pytest
+import inspect
 
 # --------- Testing --------- #
 
@@ -47,10 +48,12 @@ def create_logger(
         level=logging.DEBUG,
         log_format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
 
-    # Get name of function that called create_logger()
-    function_name = sys._getframe(1).f_code.co_name
+    # Get function name that called create_logger().
+    function_name = inspect.stack()[1][3]
+    # Get module name that called create_logger().
+    module_name = inspect.getmodule(inspect.stack()[1][0]).__name__
 
-    log = logging.getLogger(f'{__name__}.{function_name}')
+    log = logging.getLogger(f'{module_name}.{function_name}')
 
     if initialise:
         _initiliase_logger(output=output, level=level, log_format=log_format)
@@ -411,6 +414,17 @@ def positive_int(value):
     if ivalue <= 0:
         raise argparse.ArgumentTypeError(
             f'{value} is not a positive integer.')
+
+    return ivalue
+
+
+def interval(value):
+    ''' Custom argparse type for float between 0 and 1. '''
+
+    ivalue = float(value)
+    if 0 >= ivalue > 1:
+        raise argparse.ArgumentTypeError(
+            f'{value} is not within interval: 0 > x <= 1.')
 
     return ivalue
 
