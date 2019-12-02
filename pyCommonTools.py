@@ -13,6 +13,7 @@ import gzip
 import argparse
 import pytest
 import inspect
+import time
 
 # --------- Testing --------- #
 
@@ -132,8 +133,7 @@ def is_gzip(filepath):
 
 def named_pipe(path):
     """ Check if file is a named pipe. """
-
-    if stat.S_ISFIFO(os.stat(path).st_mode):
+    if path != '-' and stat.S_ISFIFO(os.stat(path).st_mode):
         pipe = True
     else:
         pipe = False
@@ -434,7 +434,7 @@ def interval(value):
 
 @contextlib.contextmanager
 def open_sam(filename: str = '-', mode: str = 'r', header: bool = True,
-             samtools='samtools'):
+             samtools: str = 'samtools'):
 
     """ Custom context manager for reading and writing SAM/BAM files. """
 
@@ -442,6 +442,11 @@ def open_sam(filename: str = '-', mode: str = 'r', header: bool = True,
 
     if mode not in ['r', 'w', 'wt', 'wb', 'rt', 'rb']:
         log.error(f'Invalid mode {mode} for open_sam.')
+        sys.exit(1)
+    elif named_pipe(filename):
+        log.error(f'Input file {filename} is a named pipe. open_sam() cannot '
+                   'read files passed by process substitution.')
+        sys.exit(1)
 
     if 'r' in mode:
         command = ['samtools', 'view', filename]
