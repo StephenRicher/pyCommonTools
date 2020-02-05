@@ -96,7 +96,8 @@ def _log_uncaught_exception(exc_type, exc_value, exc_traceback):
 
 
 @contextlib.contextmanager
-def open_smart(filename: str = None, mode: str = 'r', *args, **kwargs):
+def open_smart(filename: str = None, mode: str = 'r',
+        stderr: bool = False, *args, **kwargs):
 
     """ Wrapper to 'open()' that interprets '-' as stdout or stdin.
         Ref: https://stackoverflow.com/a/45735618
@@ -109,7 +110,10 @@ def open_smart(filename: str = None, mode: str = 'r', *args, **kwargs):
         if 'r' in mode:
             stream = sys.stdin
         else:
-            stream = sys.stdout
+            if stderr:
+                stream = sys.stderr
+            else:
+                stream = sys.stdout
         if 'b' in mode:
             fh = stream.buffer
         else:
@@ -508,7 +512,7 @@ class Sam:
         opt_out = ""
         for tag_and_type, value in opt.items():
             opt_out += f'{tag_and_type}:{value}\t'
-        return opt_out
+        return opt_out.strip()
 
     @cached_property()
     def is_reverse(self):
