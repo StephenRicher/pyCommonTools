@@ -14,6 +14,7 @@ import argparse
 import pytest
 import inspect
 import time
+import builtins
 
 # --------- Testing --------- #
 
@@ -44,9 +45,7 @@ def datadir(tmpdir, request):
 
 
 def create_logger(
-        initialise=False,
-        output=None,
-        level=logging.DEBUG,
+        initialise=False, output=None, level=logging.DEBUG,
         log_format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
 
     # Get function name that called create_logger().
@@ -57,55 +56,41 @@ def create_logger(
     log = logging.getLogger(f'{module_name}.{function_name}')
 
     if initialise:
-        _initiliase_logger(output=output, level=level, log_format=log_format)
-        log.debug(f'Initialising logger configuration.')
-    log.debug(f'Logger created.')
+        logging.basicConfig(
+            filename=output,format=log_format,level=level)
+        sys.excepthook = _log_uncaught_exception
 
     return log
-
-
-def _initiliase_logger(
-        output=None,
-        level=logging.DEBUG,
-        log_format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
-
-    (logging.basicConfig(
-        filename=output,
-        format=log_format,
-        level=level))
-    sys.excepthook = _log_uncaught_exception
-
 
 def _log_uncaught_exception(exc_type, exc_value, exc_traceback):
 
     ''' Redirect uncaught exceptions (excluding KeyboardInterrupt)
     through the logging module.
     '''
-
+    
     log = create_logger()
 
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-    (log.critical(
+    log.critical(
         fancy('Uncaught exception', colour='red'),
-        exc_info=(exc_type, exc_value, exc_traceback)))
+        exc_info=(exc_type, exc_value, exc_traceback))
 
 
 # --------- File Opening --------- #
 
 
 @contextlib.contextmanager
-def open_smart(filename: str = None, mode: str = 'r',
+def open(filename: str = None, mode: str = 'r', 
         stderr: bool = False, *args, **kwargs):
 
     """ Wrapper to 'open()' that interprets '-' as stdout or stdin.
         Ref: https://stackoverflow.com/a/45735618
     """
 
-    if not filename:
-        filename = '-'
-
+    if not filename: filename = '-'
+    
     if filename == '-':
         if 'r' in mode:
             stream = sys.stdin
@@ -119,109 +104,7 @@ def open_smart(filename: str = None, mode: str = 'r',
         else:
             fh = stream
     else:
-        fh = open(filename, mode, *args, **kwargs)
-
-    try:
-        yield fh
-    finally:
-        if filename != '-':
-            fh.close()
-
-
-def is_gzip(filepath):
-    ''' Check for GZIP magic number byte header. '''
-
-    with open(filepath, 'rb') as f:
-        return binascii.hexlify(f.read(2)) == b'1f8b'
-
-
-def named_pipe(path):
-    """ Check if file is a named pipe. """
-    if path != '-' and stat.S_ISFIFO(os.stat(path).st_mode):
-        pipe = True
-    else:
-        pipe = False
-    return pipe
-
-
-@contextlib.contextmanager
-def open_gzip(
-        filename: str = None, mode: str = 'r', gz=False, *args, **kwargs):
-
-    """ Custom context manager for reading and writing uncompressed and
-        GZ compressed files.
-
-        Interprets '-' as stdout or stdin as appropriate. Also can auto
-        detect GZ compressed files except for those inputted to stdin or
-        process substitution. Uses gzip via a subprocess to read/write
-        significantly faster than the python implementation of gzip.
-        On systems without gzip the method will default back to the python
-        gzip library.
-
-        Ref: https://stackoverflow.com/a/45735618
-    """
-
-    log = create_logger()
-    if not filename:
-        filename = '-'
-
-    # If decompress not set then attempt to auto detect GZIP compression.
-    if (not gz and
-            'r' in mode and
-            filename.endswith('.gz') and
-            not named_pipe(filename) and
-            is_gzip(filename)):
-        log.info(f'{filename} detected as gzipped. Decompressing...')
-        gz = True
-
-    if gz:
-        encoding = None if 'b' in mode else 'utf8'
-        if 'r' in mode:
-            try:
-                p = subprocess.Popen(
-                    ['zcat', '-f', filename], stdout=subprocess.PIPE,
-                    encoding=encoding)
-                fh = p.stdout
-            except FileNotFoundError:
-                if filename == '-':
-                    infile = sys.stdin.buffer
-                else:
-                    infile = filename
-                fh = gzip.open(infile, mode, *args, **kwargs)
-        else:
-            try:
-                if filename == '-':
-                    outfile = sys.stdout.buffer
-                else:
-                    try:
-                        outfile = open(filename, mode)
-                    except IOError:
-                        log.exception(f'Unable to open {filename}.')
-                        sys.exit(1)
-                p = subprocess.Popen(
-                        ['gzip', '-f'], stdout=outfile,
-                        stdin=subprocess.PIPE, encoding=encoding)
-                if filename != '-':
-                    outfile.close()
-                fh = p.stdin
-            except FileNotFoundError:
-                if filename == '-':
-                    outfile = sys.stdout.buffer
-                else:
-                    outfile = filename
-                fh = gzip.open(outfile, mode, *args, **kwargs)
-    else:
-        if filename == '-':
-            if 'r' in mode:
-                stream = sys.stdin
-            else:
-                stream = sys.stdout
-            if 'b' in mode:
-                fh = stream.buffer
-            else:
-                fh = stream
-        else:
-            fh = open(filename, mode, *args, **kwargs)
+        fh = builtins.open(filename, mode, *args, **kwargs)
 
     try:
         yield fh
@@ -348,48 +231,52 @@ class RegexMatch():
 
 # --------- Command line arguments --------- #
 
+def make_parser(
+        prog = None, base = False, epilog = None, description = None,
+        formatter_class = argparse.HelpFormatter):
+    
+    if not description:
+        module = inspect.getmodule(inspect.stack()[1][0])
+        description = inspect.getdoc(module)
 
-def set_subparser(parser=None,
-                  formatter_class=argparse.ArgumentDefaultsHelpFormatter):
+    parent = [base_parser(formatter_class)] if base else []
+    
+    return argparse.ArgumentParser(
+        prog=prog, parents=parent, description=description,
+        formatter_class=formatter_class, epilog=epilog)
+
+def get_base_args(formatter_class=argparse.HelpFormatter):
+    
+    base = argparse.ArgumentParser(
+        formatter_class=formatter_class,
+        add_help=False)
+    base.add_argument(
+        '--verbose',
+        action='store_true',
+        help='Verbose logging for debugging.')
+    base.add_argument(
+        '--log', nargs='?',
+        help='Log output file. (default: stderr)')
+        
+    return base
+
+def make_subparser(parser):
     """ Creates default arguments for all command line subparsers.
     Returns a subparser configuration and base arguments.
     """
 
-    log = create_logger()
-    if parser is None:
-        log.error(f'No valid argparse.ArgumentParser provided.')
-        sys.exit(1)
-
-    base_parser = argparse.ArgumentParser(
-        formatter_class=formatter_class,
-        add_help=False)
-    base_parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Verbose logging for debugging.')
-    base_parser.add_argument(
-        '-l', '--log', nargs='?',
-        help='Log output file.')
-
-    subparsers = parser.add_subparsers(
+    return parser.add_subparsers(
         title='required commands',
         description='',
         dest='command',
         metavar='Commands',
         help='Description:')
 
-    return subparsers, base_parser
 
-
-def execute(parser=None):
+def execute(parser):
     """ Use in conjunction with pct.set_subparser() to execute
     specific subparser command.
     """
-
-    if type(parser) is not argparse.ArgumentParser:
-        sys.stderr.write(
-            'Error: Parser argument not provided to pct.execute().\n')
-        sys.exit(1)
 
     args = parser.parse_args()
 
@@ -406,7 +293,11 @@ def execute(parser=None):
 
     args_dict = vars(args)
 
-    [args_dict.pop(key) for key in ['command', 'function', 'verbose', 'log']]
+    [args_dict.pop(key) for key in ['function', 'verbose', 'log']]
+    try:
+        args_dict.pop('command')
+    except KeyError:
+        pass
 
     return func(**vars(args))
 
