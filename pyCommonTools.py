@@ -342,9 +342,9 @@ def interval(value):
     return ivalue
 
 
-# --------- GTF processing --------- #
+# --------- GFF3 processing --------- #
 
-class GTF:
+class GFF3:
 
     def __init__(self, record):
         self.record = record.strip().split('\t')
@@ -354,7 +354,7 @@ class GTF:
 
     def split_tags(self, tags: str):
         attributes = {}
-        tags = [i.split() for i in tags.replace('"', '').split(';')]
+        tags = [i.split('=') for i in tags.split(';')]
         for tag in tags:
             if tag:
                 attributes[tag[0]] = tag[1]
