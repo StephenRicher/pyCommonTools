@@ -57,7 +57,7 @@ def create_logger(
 
     if initialise:
         logging.basicConfig(
-            filename=output,format=log_format,level=level)
+            filename=output, format=log_format, level=level)
         sys.excepthook = _log_uncaught_exception
 
     return log
@@ -232,8 +232,9 @@ class RegexMatch():
 # --------- Command line arguments --------- #
 
 def make_parser(
-        prog = None, base = False, epilog = None, description = None,
-        inout = False, nargs = '?', in_type = 'file', out_type = 'file',
+        prog = None, verbose = False, description = None,
+        infile = False, nargs = '?', in_type = 'INFILE', version = None,
+        epilog = 'Stephen Richer, University of Bath, Bath, UK (sr467@bath.ac.uk)',
         formatter_class = argparse.HelpFormatter):
 
     if not description:
@@ -241,45 +242,41 @@ def make_parser(
         description = inspect.getdoc(module)
 
     parents = []
-    if base:
-        parents.append(get_base_args(formatter_class))
-    if inout:
-        parents.append(get_inout_args(
-			formatter_class,
-			nargs=nargs, in_type=in_type, out_type=out_type))
+    parents.append(get_base_args(
+        formatter_class, version = version, verbose = verbose))
+    if infile:
+        parents.append(get_in_arg(
+			formatter_class, nargs=nargs, in_type=in_type))
 
     return argparse.ArgumentParser(
         prog=prog, parents=parents, description=description,
         formatter_class=formatter_class, epilog=epilog)
 
-def get_inout_args(
-	formatter_class=argparse.HelpFormatter,
-	in_type = 'file', out_type = 'file', nargs = '?'):
+def get_in_arg(
+	formatter_class=argparse.HelpFormatter, in_type = 'INFILE', nargs = '?'):
 
     inout = argparse.ArgumentParser(
         formatter_class=formatter_class,
         add_help=False)
     inout.add_argument(
-        '-o', '--out',
-        help=f'Output {out_type}. (default: stdout)')
-    inout.add_argument(
-        'infile', nargs=nargs,
-        help=f'Input {in_type}. (default: stdin)')
+        'infile', nargs=nargs, metavar = in_type.upper(),
+        help='(default: stdin)')
 
     return inout
 
-def get_base_args(formatter_class=argparse.HelpFormatter):
+def get_base_args(formatter_class=argparse.HelpFormatter,
+        version = None, verbose = True):
 
     base = argparse.ArgumentParser(
         formatter_class=formatter_class,
         add_help=False)
-    base.add_argument(
-        '--verbose',
-        action='store_true',
-        help='Verbose logging for debugging.')
-    base.add_argument(
-        '--log',
-        help='Log output file. (default: stderr)')
+    if verbose:
+        base.add_argument(
+            '--verbose', action='store_true',
+            help='Verbose logging for debugging.')
+    if version:
+        base.add_argument(
+            '--version', action='version', version=f'%(prog)s {version}')
 
     return base
 
@@ -310,11 +307,11 @@ def execute(parser):
         sys.exit(1)
 
     level = logging.DEBUG if args.verbose else None
-    log = create_logger(initialise=True, output=args.log, level=level)
+    log = create_logger(initialise=True, level=level)
 
     args_dict = vars(args)
 
-    [args_dict.pop(key) for key in ['function', 'verbose', 'log']]
+    [args_dict.pop(key) for key in ['function', 'verbose']]
     try:
         args_dict.pop('command')
     except KeyError:
@@ -344,6 +341,60 @@ def interval(value):
 
     return ivalue
 
+
+# --------- GTF processing --------- #
+
+class GTF:
+
+    def __init__(self, record):
+        self.record = record.strip().split('\t')
+
+    def __repr__(self):
+        return '\t'.join(self.record)
+
+    def split_tags(self, tags: str):
+        attributes = {}
+        tags = [i.split() for i in tags.replace('"', '').split(';')]
+        for tag in tags:
+            if tag:
+                attributes[tag[0]] = tag[1]
+        return attributes
+
+    @property
+    def seqname(self):
+        return self.record[0]
+
+    @property
+    def source(self):
+        return self.record[1]
+
+    @property
+    def feature(self):
+        return self.record[2]
+
+    @property
+    def start(self):
+        return self.record[3]
+
+    @property
+    def end(self):
+        return self.record[4]
+
+    @property
+    def score(self):
+        return self.record[5]
+
+    @property
+    def strand(self):
+        return self.record[6]
+
+    @property
+    def frame(self):
+        return self.record[7]
+
+    @property
+    def attributes(self):
+        return self.split_tags(self.record[8])
 
 # --------- SAM/BAM processing --------- #
 
