@@ -67,7 +67,7 @@ def _log_uncaught_exception(exc_type, exc_value, exc_traceback):
     ''' Redirect uncaught exceptions (excluding KeyboardInterrupt)
     through the logging module.
     '''
-    
+
     log = create_logger()
 
     if issubclass(exc_type, KeyboardInterrupt):
@@ -82,7 +82,7 @@ def _log_uncaught_exception(exc_type, exc_value, exc_traceback):
 
 
 @contextlib.contextmanager
-def open(filename: str = None, mode: str = 'r', 
+def open(filename: str = None, mode: str = 'r',
         stderr: bool = False, *args, **kwargs):
 
     """ Wrapper to 'open()' that interprets '-' as stdout or stdin.
@@ -90,7 +90,7 @@ def open(filename: str = None, mode: str = 'r',
     """
 
     if not filename: filename = '-'
-    
+
     if filename == '-':
         if 'r' in mode:
             stream = sys.stdin
@@ -232,11 +232,10 @@ class RegexMatch():
 # --------- Command line arguments --------- #
 
 def make_parser(
-        prog = None, base = False, 
-        inout = False, nargs = '?',
-        epilog = None, description = None,
+        prog = None, base = False, epilog = None, description = None,
+        inout = False, nargs = '?', in_type = 'file', out_type = 'file',
         formatter_class = argparse.HelpFormatter):
-    
+
     if not description:
         module = inspect.getmodule(inspect.stack()[1][0])
         description = inspect.getdoc(module)
@@ -245,28 +244,32 @@ def make_parser(
     if base:
         parents.append(get_base_args(formatter_class))
     if inout:
-        parents.append(get_inout_args(formatter_class, nargs = nargs))
-    
+        parents.append(get_inout_args(
+			formatter_class,
+			nargs=nargs, in_type=in_type, out_type=out_type))
+
     return argparse.ArgumentParser(
         prog=prog, parents=parents, description=description,
         formatter_class=formatter_class, epilog=epilog)
 
-def get_inout_args(formatter_class=argparse.HelpFormatter, nargs = '?'):
-    
+def get_inout_args(
+	formatter_class=argparse.HelpFormatter,
+	in_type = 'file', out_type = 'file', nargs = '?'):
+
     inout = argparse.ArgumentParser(
         formatter_class=formatter_class,
         add_help=False)
     inout.add_argument(
         '-o', '--out',
-        help='Output file. (default: stdout)')
+        help=f'Output {out_type}. (default: stdout)')
     inout.add_argument(
-        'infile', nargs=nargs, 
-        help='Input file. (default: stdin)')
-        
+        'infile', nargs=nargs,
+        help=f'Input {in_type}. (default: stdin)')
+
     return inout
 
 def get_base_args(formatter_class=argparse.HelpFormatter):
-    
+
     base = argparse.ArgumentParser(
         formatter_class=formatter_class,
         add_help=False)
@@ -277,7 +280,7 @@ def get_base_args(formatter_class=argparse.HelpFormatter):
     base.add_argument(
         '--log',
         help='Log output file. (default: stderr)')
-        
+
     return base
 
 def make_subparser(parser):
