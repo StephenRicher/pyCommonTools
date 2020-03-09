@@ -232,18 +232,38 @@ class RegexMatch():
 # --------- Command line arguments --------- #
 
 def make_parser(
-        prog = None, base = False, epilog = None, description = None,
+        prog = None, base = False, 
+        inout = False, nargs = '?',
+        epilog = None, description = None,
         formatter_class = argparse.HelpFormatter):
     
     if not description:
         module = inspect.getmodule(inspect.stack()[1][0])
         description = inspect.getdoc(module)
 
-    parent = [base_parser(formatter_class)] if base else []
+    parents = []
+    if base:
+        parents.append(get_base_args(formatter_class))
+    if inout:
+        parents.append(get_inout_args(formatter_class, nargs = nargs))
     
     return argparse.ArgumentParser(
-        prog=prog, parents=parent, description=description,
+        prog=prog, parents=parents, description=description,
         formatter_class=formatter_class, epilog=epilog)
+
+def get_inout_args(formatter_class=argparse.HelpFormatter, nargs = '?'):
+    
+    inout = argparse.ArgumentParser(
+        formatter_class=formatter_class,
+        add_help=False)
+    inout.add_argument(
+        '-o', '--out',
+        help='Output file. (default: stdout)')
+    inout.add_argument(
+        'infile', nargs=nargs, 
+        help='Input file. (default: stdin)')
+        
+    return inout
 
 def get_base_args(formatter_class=argparse.HelpFormatter):
     
@@ -255,7 +275,7 @@ def get_base_args(formatter_class=argparse.HelpFormatter):
         action='store_true',
         help='Verbose logging for debugging.')
     base.add_argument(
-        '--log', nargs='?',
+        '--log',
         help='Log output file. (default: stderr)')
         
     return base
@@ -274,8 +294,8 @@ def make_subparser(parser):
 
 
 def execute(parser):
-    """ Use in conjunction with pct.set_subparser() to execute
-    specific subparser command.
+    """ Use in conjunction with pct.mark_parser() to execute
+    specific command.
     """
 
     args = parser.parse_args()
@@ -286,10 +306,8 @@ def execute(parser):
         parser.print_help()
         sys.exit(1)
 
-    log = create_logger(
-        initialise=True,
-        output=args.log,
-        level=logging.DEBUG if args.verbose else None)
+    level = logging.DEBUG if args.verbose else None
+    log = create_logger(initialise=True, output=args.log, level=level)
 
     args_dict = vars(args)
 
