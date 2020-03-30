@@ -259,7 +259,7 @@ def get_in_arg(
         formatter_class=formatter_class,
         add_help=False)
     inout.add_argument(
-        'infile', nargs=nargs, metavar = in_type.upper(),
+        'infile', nargs=nargs, metavar=in_type.upper(), default='-',
         help='(default: stdin)')
 
     return inout
@@ -270,13 +270,13 @@ def get_base_args(formatter_class=argparse.HelpFormatter,
     base = argparse.ArgumentParser(
         formatter_class=formatter_class,
         add_help=False)
+    if version:
+        base.add_argument(
+            '--version', action='version', version=f'%(prog)s {version}')
     if verbose:
         base.add_argument(
             '--verbose', action='store_true',
             help='Verbose logging for debugging.')
-    if version:
-        base.add_argument(
-            '--version', action='version', version=f'%(prog)s {version}')
 
     return base
 
@@ -294,7 +294,7 @@ def make_subparser(parser):
 
 
 def execute(parser):
-    """ Use in conjunction with pct.mark_parser() to execute
+    """ Use in conjunction with pct.make_parser() to execute
     specific command.
     """
 
@@ -306,7 +306,7 @@ def execute(parser):
         parser.print_help()
         sys.exit(1)
 
-    level = logging.DEBUG if args.verbose else None
+    level = logging.DEBUG if args.verbose else logging.INFO
     log = create_logger(initialise=True, level=level)
 
     args_dict = vars(args)
