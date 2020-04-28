@@ -252,6 +252,7 @@ def make_parser(
         prog=prog, parents=parents, description=description,
         formatter_class=formatter_class, epilog=epilog)
 
+
 def get_in_arg(
 	formatter_class=argparse.HelpFormatter, in_type = 'INFILE', nargs = '?'):
 
@@ -263,6 +264,7 @@ def get_in_arg(
         help='(default: stdin)')
 
     return inout
+
 
 def get_base_args(formatter_class=argparse.HelpFormatter,
         version = None, verbose = True):
@@ -279,6 +281,7 @@ def get_base_args(formatter_class=argparse.HelpFormatter,
             help='Verbose logging for debugging.')
 
     return base
+
 
 def make_subparser(parser):
     """ Creates default arguments for all command line subparsers.
@@ -306,16 +309,19 @@ def execute(parser):
         parser.print_help()
         sys.exit(1)
 
-    level = logging.DEBUG if args.verbose else logging.INFO
+    args_dict = vars(args)
+    if 'verbose' in args_dict and args.verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
     log = create_logger(initialise=True, level=level)
 
-    args_dict = vars(args)
-
-    [args_dict.pop(key) for key in ['function', 'verbose']]
-    try:
-        args_dict.pop('command')
-    except KeyError:
-        pass
+    for arg in ['verbose', 'command', 'function']:
+        try:
+            args_dict.pop(arg)
+        except KeyError:
+            pass
 
     return func(**vars(args))
 
